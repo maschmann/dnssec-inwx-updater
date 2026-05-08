@@ -1,7 +1,8 @@
-import tomllib
-import pytest
 from pathlib import Path
-from dnssec_inwx_updater.config import load_config, InwxConfig, CertConfig, DnsConfig, AppConfig
+
+import pytest
+
+from dnssec_inwx_updater.config import load_config
 
 
 def write_toml(tmp_path: Path, content: str) -> Path:

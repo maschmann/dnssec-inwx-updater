@@ -1,6 +1,7 @@
 import subprocess
-import pytest
 from pathlib import Path
+
+import pytest
 
 CERT_DOMAIN = "mail.example.com"
 

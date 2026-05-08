@@ -12,7 +12,6 @@ from dnssec_inwx_updater.inwx import InwxClient
 from dnssec_inwx_updater.state import load_state, save_state
 from dnssec_inwx_updater.tlsa import generate_tlsa_hash
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 log = logging.getLogger(__name__)
 
 
@@ -46,13 +45,18 @@ def run(config_path: Path, state_path: Path) -> None:
             log.info("No existing TLSA record found — creating new one.")
             client.create_record(cfg.dns.zone, cfg.dns.record_name, content, cfg.dns.ttl)
     finally:
-        client.logout()
+        try:
+            client.logout()
+        except Exception as exc:
+            log.warning("INWX logout failed (non-critical): %s", exc)
 
     save_state(state_path, current_hash, datetime.now(tz=UTC))
     log.info("TLSA record updated successfully. New hash: %s", tlsa_hash)
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+
     parser = argparse.ArgumentParser(
         description="Update INWX DANE TLSA records when Caddy certificates change."
     )
