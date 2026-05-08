@@ -23,7 +23,7 @@ class InwxClient:
 
     def find_tlsa_record(self, zone: str, record_name: str) -> dict | None:
         result = self._api.call_api(
-            api_method="nameserver.listRecords",
+            api_method="nameserver.info",
             method_params={"domain": zone, "name": record_name, "type": "TLSA"},
         )
         if result["code"] != 1000:
@@ -55,5 +55,6 @@ class InwxClient:
 
     def logout(self) -> None:
         result = self._api.logout()
-        if result and result.get("code") != 1000:
+        # 1000 = success, 1500 = "Command completed successfully; ending session" (normal logout code)
+        if result and result.get("code") not in (1000, 1500):
             raise RuntimeError(f"INWX logout failed: {result.get('msg')}")

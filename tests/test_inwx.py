@@ -20,7 +20,7 @@ def make_client(api_responses: dict) -> InwxClient:
 
 def test_find_tlsa_record_returns_none_when_empty():
     client = make_client({
-        "nameserver.listRecords": {"code": 1000, "resData": {"record": []}}
+        "nameserver.info": {"code": 1000, "resData": {"record": []}}
     })
     result = client.find_tlsa_record("example.com", "_25._tcp.mail")
     assert result is None
@@ -29,7 +29,7 @@ def test_find_tlsa_record_returns_none_when_empty():
 def test_find_tlsa_record_returns_matching_record():
     record = {"id": 42, "name": "_25._tcp.mail", "type": "TLSA", "content": "3 1 1 oldhash"}
     client = make_client({
-        "nameserver.listRecords": {"code": 1000, "resData": {"record": [record]}}
+        "nameserver.info": {"code": 1000, "resData": {"record": [record]}}
     })
     result = client.find_tlsa_record("example.com", "_25._tcp.mail")
     assert result == record
@@ -37,7 +37,7 @@ def test_find_tlsa_record_returns_matching_record():
 
 def test_find_tlsa_record_raises_on_api_error():
     client = make_client({
-        "nameserver.listRecords": {"code": 2200, "msg": "Not authorized"}
+        "nameserver.info": {"code": 2200, "msg": "Not authorized"}
     })
     with pytest.raises(RuntimeError, match="INWX API error"):
         client.find_tlsa_record("example.com", "_25._tcp.mail")
@@ -91,3 +91,13 @@ def test_update_record_raises_on_api_error():
     })
     with pytest.raises(RuntimeError, match="INWX API error"):
         client.update_record(42, "3 1 1 hash")
+
+
+def test_logout_accepts_code_1500():
+    """INWX returns 1500 ('ending session') as the normal logout response code."""
+    mock_api = MagicMock()
+    mock_api.login.return_value = {"code": 1000}
+    mock_api.logout.return_value = {"code": 1500, "msg": "Command completed successfully; ending session"}
+    with patch("dnssec_inwx_updater.inwx.ApiClient", return_value=mock_api):
+        client = InwxClient(username="user", password="pass")
+    client.logout()  # must not raise
