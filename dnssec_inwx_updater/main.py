@@ -18,6 +18,7 @@ CONFIG_TEMPLATE = """\
 [inwx]
 username = "your-inwx-username"
 password = "your-inwx-password"
+# shared_secret = ""  # TOTP shared secret (base32 string from QR code) — only needed if 2FA is enabled
 # test_mode = false  # Uncomment to use the INWX OT&E sandbox for testing
 
 [cert]
@@ -66,6 +67,7 @@ def run(config_path: Path, state_path: Path) -> None:
         username=cfg.inwx.username,
         password=cfg.inwx.password,
         test_mode=cfg.inwx.test_mode,
+        shared_secret=cfg.inwx.shared_secret,
     )
     try:
         record = client.find_tlsa_record(cfg.dns.zone, cfg.dns.record_name)

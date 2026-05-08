@@ -10,6 +10,7 @@ class InwxConfig:
     username: str
     password: str
     test_mode: bool = False
+    shared_secret: str | None = None
 
 
 @dataclass
@@ -58,6 +59,7 @@ def load_config(path: Path | str) -> AppConfig:
             username=inwx_data["username"],
             password=inwx_data["password"],
             test_mode=inwx_data.get("test_mode", False),
+            shared_secret=inwx_data.get("shared_secret") or None,
         ),
         cert=CertConfig(
             cert_directory=cert_data["cert_directory"],

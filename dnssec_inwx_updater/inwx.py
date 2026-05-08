@@ -7,10 +7,10 @@ class InwxClient:
     API_URL = ApiClient.API_LIVE_URL
     API_OTE_URL = ApiClient.API_OTE_URL
 
-    def __init__(self, username: str, password: str, test_mode: bool = False) -> None:
+    def __init__(self, username: str, password: str, test_mode: bool = False, shared_secret: str | None = None) -> None:
         url = self.API_OTE_URL if test_mode else self.API_URL
         self._api = ApiClient(api_url=url, debug_mode=False)
-        result = self._api.login(username, password)
+        result = self._api.login(username, password, shared_secret=shared_secret)
         if result["code"] != 1000:
             raise RuntimeError(f"INWX login failed: {result.get('msg')}")
 
