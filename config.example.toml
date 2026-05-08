@@ -1,0 +1,18 @@
+[inwx]
+username = "your-inwx-username"
+password = "your-inwx-password"
+# test_mode = false  # Uncomment to use the INWX OT&E sandbox for testing
+
+[cert]
+# Directory where Caddy stores certificates
+cert_directory = "/var/lib/caddy/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory"
+# The domain whose certificate to watch — resolves to {cert_directory}/{domain}/{domain}.crt
+domain = "mail.example.com"
+
+[dns]
+# The INWX zone (registered domain) that contains the record
+zone = "example.com"
+# The record name — INWX appends the zone automatically
+record_name = "_25._tcp.mail"
+# TTL in seconds
+ttl = 3600
