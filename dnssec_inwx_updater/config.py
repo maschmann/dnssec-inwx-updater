@@ -11,6 +11,7 @@ class InwxConfig:
     password: str
     test_mode: bool = False
     shared_secret: str | None = None
+    language: str = "de"
 
 
 @dataclass
@@ -60,6 +61,7 @@ def load_config(path: Path | str) -> AppConfig:
             password=inwx_data["password"],
             test_mode=inwx_data.get("test_mode", False),
             shared_secret=inwx_data.get("shared_secret") or None,
+            language=inwx_data.get("language", "de"),
         ),
         cert=CertConfig(
             cert_directory=cert_data["cert_directory"],

@@ -2,7 +2,8 @@
 username = "your-inwx-username"
 password = "your-inwx-password"
 # shared_secret = ""  # TOTP shared secret (base32 string from QR code) — only needed if 2FA is enabled
-# test_mode = false  # Uncomment to use the INWX OT&E sandbox for testing
+# language = "de"     # API response language: "de" for inwx.de, "en" for inwx.com (default: de)
+# test_mode = false   # Uncomment to use the INWX OT&E sandbox for testing
 
 [cert]
 # Directory where Caddy stores certificates

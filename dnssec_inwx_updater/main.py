@@ -19,7 +19,8 @@ CONFIG_TEMPLATE = """\
 username = "your-inwx-username"
 password = "your-inwx-password"
 # shared_secret = ""  # TOTP shared secret (base32 string from QR code) — only needed if 2FA is enabled
-# test_mode = false  # Uncomment to use the INWX OT&E sandbox for testing
+# language = "de"     # API response language: "de" for inwx.de, "en" for inwx.com (default: de)
+# test_mode = false   # Uncomment to use the INWX OT&E sandbox for testing
 
 [cert]
 # Directory where Caddy stores certificates
@@ -68,6 +69,7 @@ def run(config_path: Path, state_path: Path) -> None:
         password=cfg.inwx.password,
         test_mode=cfg.inwx.test_mode,
         shared_secret=cfg.inwx.shared_secret,
+        language=cfg.inwx.language,
     )
     try:
         record = client.find_tlsa_record(cfg.dns.zone, cfg.dns.record_name)
