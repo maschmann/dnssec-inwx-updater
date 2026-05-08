@@ -1,15 +1,20 @@
 from unittest.mock import MagicMock, patch
+
 import pytest
+
 from dnssec_inwx_updater.inwx import InwxClient
 
 
 def make_client(api_responses: dict) -> InwxClient:
     mock_api = MagicMock()
     mock_api.login.return_value = {"code": 1000, "msg": "OK"}
-    mock_api.call_api.side_effect = lambda api_method, method_params: api_responses.get(api_method, {})
+
+    def side_effect(api_method, method_params):
+        return api_responses.get(api_method, {})
+
+    mock_api.call_api.side_effect = side_effect
     with patch("dnssec_inwx_updater.inwx.ApiClient", return_value=mock_api):
         client = InwxClient(username="user", password="pass", test_mode=False)
-        client._api = mock_api
     return client
 
 
@@ -70,3 +75,19 @@ def test_update_record_calls_api():
         api_method="nameserver.updateRecord",
         method_params={"id": 42, "content": "3 1 1 newhash"},
     )
+
+
+def test_create_record_raises_on_api_error():
+    client = make_client({
+        "nameserver.createRecord": {"code": 2200, "msg": "Quota exceeded"}
+    })
+    with pytest.raises(RuntimeError, match="INWX API error"):
+        client.create_record("example.com", "_25._tcp.mail", "3 1 1 hash", 3600)
+
+
+def test_update_record_raises_on_api_error():
+    client = make_client({
+        "nameserver.updateRecord": {"code": 2200, "msg": "Record not found"}
+    })
+    with pytest.raises(RuntimeError, match="INWX API error"):
+        client.update_record(42, "3 1 1 hash")

@@ -21,7 +21,7 @@ class InwxClient:
         )
         if result["code"] != 1000:
             raise RuntimeError(f"INWX API error listing records: {result.get('msg')}")
-        records = result.get("resData", {}).get("record", [])
+        records = (result.get("resData") or {}).get("record", [])
         return records[0] if records else None
 
     def create_record(self, zone: str, name: str, content: str, ttl: int) -> None:
@@ -47,4 +47,6 @@ class InwxClient:
             raise RuntimeError(f"INWX API error updating record: {result.get('msg')}")
 
     def logout(self) -> None:
-        self._api.logout()
+        result = self._api.logout()
+        if result and result.get("code") != 1000:
+            raise RuntimeError(f"INWX logout failed: {result.get('msg')}")
