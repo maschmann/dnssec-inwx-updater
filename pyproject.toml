@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dnssec-inwx-updater"
-version = "0.1.0"
-description = "Automatically update INWX DANE TLSA DNS records when Caddy certificates change"
+version = "1.0.1"
+description = "Automatically update INWX DANE TLSA DNS records when Caddy Letsencrypt certificates change"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
@@ -23,8 +23,8 @@ dev = [
 dnssec-inwx-updater = "dnssec_inwx_updater.main:main"
 
 [project.urls]
-Homepage = "https://github.com/YOUR_GITHUB_USER/dnssec-inwx-updater"
-Repository = "https://github.com/YOUR_GITHUB_USER/dnssec-inwx-updater"
+Homepage = "https://github.com/maschmann/dnssec-inwx-updater"
+Repository = "https://github.com/maschmann/dnssec-inwx-updater"
 
 [tool.ruff]
 line-length = 120
