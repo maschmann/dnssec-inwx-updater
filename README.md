@@ -6,13 +6,27 @@ When Caddy renews a certificate and its public key changes, this tool detects th
 
 ## Installation
 
+**From PyPI:**
 ```bash
 pip install dnssec-inwx-updater
 ```
 
+**From a wheel (without PyPI access):**
+```bash
+pip install dnssec_inwx_updater-*.whl
+```
+
+**From source:**
+```bash
+git clone <repo>
+cd dnssec-inwx-updater
+make dev        # creates .venv and installs dev dependencies
+make build      # builds wheel into dist/
+```
+
 ## Configuration
 
-Generate a template config file with:
+Generate a template config file:
 
 ```bash
 dnssec-inwx-updater --create-config --config /etc/dnssec-inwx-updater/config.toml
@@ -26,7 +40,9 @@ Then edit the file and fill in your details:
 [inwx]
 username = "your-inwx-username"
 password = "your-inwx-password"
-# test_mode = false  # Uncomment to use the INWX OT&E sandbox for testing
+# shared_secret = ""  # TOTP shared secret — only needed if 2FA is enabled on your account
+# language = "de"     # API response language: "de" for inwx.de, "en" for inwx.com (default: de)
+# test_mode = false   # Uncomment to use the INWX OT&E sandbox for testing
 
 [cert]
 # Directory where Caddy stores certificates
@@ -45,16 +61,20 @@ ttl = 3600
 
 ### Config fields
 
-| Section | Key | Description |
-|---------|-----|-------------|
-| `[inwx]` | `username` | INWX account username |
-| `[inwx]` | `password` | INWX account password |
-| `[inwx]` | `test_mode` | `true` to use the OT&E sandbox (default: `false`) |
-| `[cert]` | `cert_directory` | Root directory where Caddy stores certificates |
-| `[cert]` | `domain` | Domain to watch — cert resolved as `{cert_directory}/{domain}/{domain}.crt` |
-| `[dns]` | `zone` | INWX DNS zone (registered domain, e.g. `example.com`) |
-| `[dns]` | `record_name` | Record name within the zone (e.g. `_25._tcp.mail`) |
-| `[dns]` | `ttl` | TTL in seconds (e.g. `3600`) |
+| Section | Key | Required | Default | Description |
+|---------|-----|----------|---------|-------------|
+| `[inwx]` | `username` | ✓ | — | INWX login name (shown top-right in the control panel) |
+| `[inwx]` | `password` | ✓ | — | INWX account password |
+| `[inwx]` | `shared_secret` | | `""` | TOTP base32 seed from QR code — only if 2FA is enabled |
+| `[inwx]` | `language` | | `"de"` | API response language: `"de"` (inwx.de) or `"en"` (inwx.com) |
+| `[inwx]` | `test_mode` | | `false` | Use the INWX OT&E sandbox instead of production |
+| `[cert]` | `cert_directory` | ✓ | — | Root directory where Caddy stores certificates |
+| `[cert]` | `domain` | ✓ | — | Domain to watch — cert resolved as `{cert_directory}/{domain}/{domain}.crt` |
+| `[dns]` | `zone` | ✓ | — | INWX DNS zone (registered domain, e.g. `example.com`) |
+| `[dns]` | `record_name` | ✓ | — | Record name within the zone (e.g. `_25._tcp.mail`) |
+| `[dns]` | `ttl` | ✓ | — | TTL in seconds (e.g. `3600`) |
+
+> **Note:** The INWX username is your **login handle**, not your customer number. It is displayed in the top-right corner of the INWX control panel after logging in.
 
 ## Usage
 
@@ -70,15 +90,16 @@ Run as a cron job (every 5 minutes):
 */5 * * * * /usr/local/bin/dnssec-inwx-updater --config /etc/dnssec-inwx-updater/config.toml >> /var/log/dnssec-inwx-updater.log 2>&1
 ```
 
-The tool is silent on no-op (certificate unchanged). On a change it logs what it did. On error it logs to stderr and exits non-zero — cron will capture this.
+The tool is silent when the certificate is unchanged. On a change it logs what it did. On error it logs to stderr and exits non-zero — cron will capture this.
 
 ## How It Works
 
 1. Computes a SHA-256 hash of the `.crt` file managed by Caddy
 2. Compares it to the last known hash stored in `state.json` (alongside `config.toml`)
-3. If changed: generates the TLSA hash (`3 1 1` — DANE-EE, SPKI, SHA-256) via openssl
-4. Finds the existing TLSA record in INWX and updates it, or creates a new one if absent
-5. Saves the new hash to `state.json`
+3. If unchanged: exits silently
+4. If changed: generates the TLSA hash (`3 1 1` — DANE-EE, SPKI, SHA-256) via openssl pipeline
+5. Queries INWX for an existing TLSA record and updates it, or creates a new one if absent
+6. Saves the new hash to `state.json` — only on success, so failures retry on the next run
 
 ## TLSA Record Format
 
@@ -86,8 +107,10 @@ The tool is silent on no-op (certificate unchanged). On a change it logs what it
 _25._tcp.mail.example.com. 3600 IN TLSA 3 1 1 <sha256-of-spki>
 ```
 
+Parameters: `3` = DANE-EE (end-entity), `1` = SPKI selector, `1` = SHA-256 hash.
+
 ## Requirements
 
 - Python 3.11+
 - `openssl` available in `PATH`
-- An INWX account with API access
+- An INWX account with DNS API access
