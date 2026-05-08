@@ -12,28 +12,49 @@ pip install dnssec-inwx-updater
 
 ## Configuration
 
-Copy the example config and fill in your details:
+Generate a template config file with:
 
 ```bash
-cp config.example.toml /etc/dnssec-inwx-updater/config.toml
+dnssec-inwx-updater --create-config --config /etc/dnssec-inwx-updater/config.toml
 ```
 
-Edit `/etc/dnssec-inwx-updater/config.toml`:
+This writes a commented template to the given path (parent directories are created automatically) and exits. If the file already exists the command aborts with an error.
+
+Then edit the file and fill in your details:
 
 ```toml
 [inwx]
 username = "your-inwx-username"
 password = "your-inwx-password"
+# test_mode = false  # Uncomment to use the INWX OT&E sandbox for testing
 
 [cert]
+# Directory where Caddy stores certificates
 cert_directory = "/var/lib/caddy/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory"
+# The domain whose certificate to watch — resolves to {cert_directory}/{domain}/{domain}.crt
 domain = "mail.example.com"
 
 [dns]
+# The INWX zone (registered domain) that contains the record
 zone = "example.com"
+# The record name — INWX appends the zone automatically
 record_name = "_25._tcp.mail"
+# TTL in seconds
 ttl = 3600
 ```
+
+### Config fields
+
+| Section | Key | Description |
+|---------|-----|-------------|
+| `[inwx]` | `username` | INWX account username |
+| `[inwx]` | `password` | INWX account password |
+| `[inwx]` | `test_mode` | `true` to use the OT&E sandbox (default: `false`) |
+| `[cert]` | `cert_directory` | Root directory where Caddy stores certificates |
+| `[cert]` | `domain` | Domain to watch — cert resolved as `{cert_directory}/{domain}/{domain}.crt` |
+| `[dns]` | `zone` | INWX DNS zone (registered domain, e.g. `example.com`) |
+| `[dns]` | `record_name` | Record name within the zone (e.g. `_25._tcp.mail`) |
+| `[dns]` | `ttl` | TTL in seconds (e.g. `3600`) |
 
 ## Usage
 

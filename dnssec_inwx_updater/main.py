@@ -14,6 +14,37 @@ from dnssec_inwx_updater.tlsa import generate_tlsa_hash
 
 log = logging.getLogger(__name__)
 
+CONFIG_TEMPLATE = """\
+[inwx]
+username = "your-inwx-username"
+password = "your-inwx-password"
+# test_mode = false  # Uncomment to use the INWX OT&E sandbox for testing
+
+[cert]
+# Directory where Caddy stores certificates
+cert_directory = "/var/lib/caddy/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory"
+# The domain whose certificate to watch — resolves to {cert_directory}/{domain}/{domain}.crt
+domain = "mail.example.com"
+
+[dns]
+# The INWX zone (registered domain) that contains the record
+zone = "example.com"
+# The record name — INWX appends the zone automatically
+record_name = "_25._tcp.mail"
+# TTL in seconds
+ttl = 3600
+"""
+
+
+def create_config(config_path: Path) -> None:
+    if config_path.exists():
+        log.error("Config file already exists: %s", config_path)
+        sys.exit(1)
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    config_path.write_text(CONFIG_TEMPLATE)
+    print(f"Config template written to {config_path}")
+    print("Edit the file and fill in your INWX credentials and domain details.")
+
 
 def run(config_path: Path, state_path: Path) -> None:
     cfg = load_config(config_path)
@@ -66,10 +97,19 @@ def main() -> None:
         default=Path("config.toml"),
         help="Path to config.toml (default: ./config.toml)",
     )
+    parser.add_argument(
+        "--create-config",
+        action="store_true",
+        help="Write a template config.toml to the path given by --config and exit.",
+    )
     args = parser.parse_args()
 
     config_path = args.config
     state_path = config_path.parent / "state.json"
+
+    if args.create_config:
+        create_config(config_path)
+        return
 
     try:
         run(config_path, state_path)
