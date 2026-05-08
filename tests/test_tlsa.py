@@ -1,6 +1,8 @@
-import subprocess
 import hashlib
+import subprocess
+
 import pytest
+
 from dnssec_inwx_updater.tlsa import generate_tlsa_hash
 
 
@@ -25,5 +27,5 @@ def test_generate_tlsa_hash_matches_manual_pipeline(sample_cert):
 
 
 def test_generate_tlsa_hash_raises_on_missing_file():
-    with pytest.raises(Exception):
+    with pytest.raises(subprocess.CalledProcessError):
         generate_tlsa_hash("/nonexistent/cert.crt")
