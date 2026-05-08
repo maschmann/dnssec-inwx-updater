@@ -131,7 +131,7 @@ def test_run_calls_logout_on_success(tmp_path):
         mock_client.logout.assert_called_once()
 
 
-def test_main_exits_nonzero_on_error(tmp_path, monkeypatch, capsys):
+def test_main_exits_nonzero_on_error(tmp_path, monkeypatch):
     config_path = str(tmp_path / "config.toml")
     monkeypatch.setattr(sys, "argv", ["dnssec-inwx-updater", "--config", config_path])
     with pytest.raises(SystemExit) as exc_info:
@@ -146,3 +146,22 @@ def test_main_derives_state_path_from_config(tmp_path, monkeypatch):
         main()
         _, state_arg = mock_run.call_args[0]
         assert state_arg == tmp_path / "state.json"
+
+
+def test_run_logs_warning_when_logout_fails(tmp_path):
+    cfg = make_config_file(tmp_path)
+    state = tmp_path / "state.json"
+    mock_client = MagicMock()
+    mock_client.find_tlsa_record.return_value = None
+    mock_client.logout.side_effect = RuntimeError("network gone")
+
+    with (
+        patch("dnssec_inwx_updater.main.hash_cert", return_value="newhash"),
+        patch("dnssec_inwx_updater.main.load_state", return_value={}),
+        patch("dnssec_inwx_updater.main.generate_tlsa_hash", return_value="tlsahash"),
+        patch("dnssec_inwx_updater.main.InwxClient", return_value=mock_client),
+        patch("dnssec_inwx_updater.main.save_state"),
+        patch("dnssec_inwx_updater.main.log") as mock_log,
+    ):
+        run(cfg, state)  # must NOT raise
+        mock_log.warning.assert_called_once()
