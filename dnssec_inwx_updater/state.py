@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 
@@ -10,8 +10,11 @@ def load_state(path: Path | str) -> dict:
     path = Path(path)
     if not path.exists():
         return {}
-    with open(path) as f:
-        return json.load(f)
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return {}
 
 
 def save_state(path: Path | str, cert_hash: str, timestamp: datetime) -> None:

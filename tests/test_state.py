@@ -1,6 +1,6 @@
 import json
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import UTC, datetime
+
 from dnssec_inwx_updater.state import load_state, save_state
 
 
@@ -18,7 +18,7 @@ def test_load_state_returns_existing_data(tmp_path):
 
 def test_save_state_writes_hash_and_timestamp(tmp_path):
     p = tmp_path / "state.json"
-    now = datetime(2026, 5, 8, 9, 0, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 5, 8, 9, 0, 0, tzinfo=UTC)
     save_state(p, "deadbeef", now)
     data = json.loads(p.read_text())
     assert data["last_cert_hash"] == "deadbeef"
@@ -28,7 +28,7 @@ def test_save_state_writes_hash_and_timestamp(tmp_path):
 def test_save_state_is_atomic(tmp_path):
     """Writing state should not leave a partial file on read."""
     p = tmp_path / "state.json"
-    now = datetime(2026, 5, 8, 9, 0, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 5, 8, 9, 0, 0, tzinfo=UTC)
     save_state(p, "hash1", now)
     save_state(p, "hash2", now)
     data = json.loads(p.read_text())
